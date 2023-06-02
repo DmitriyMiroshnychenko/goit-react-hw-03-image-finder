@@ -50,22 +50,12 @@ export class App extends Component {
       .then(images => {
         if (images.hits.length === 0) {
           toast.info('No images found for this query');
-          return this.setState({
-            queryResult: [],
-            currentPage: 1,
-          });
+          return;
         }
-        if (prevSearchQuery !== searchQuery) {
-          this.setState({
-            queryResult: images.hits,
-            totalQueryResult: images.totalHits,
-          });
-        }
-        if (prevSearchQuery === searchQuery && prevPage !== currentPage) {
-          this.setState(prevState => ({
-            queryResult: [...prevState.queryResult, ...images.hits],
-          }));
-        }
+
+        this.setState(prevState => ({
+          queryResult: [...prevState.queryResult, ...images.hits],
+        }));
       })
       .catch(response => {
         console.log(response);
@@ -83,7 +73,6 @@ export class App extends Component {
     this.setState(prevState => ({
       isModalOpen: !prevState.isModalOpen,
     }));
-    document.body.style.overflow = this.state.isModalOpen ? 'auto' : 'hidden';
   };
 
   enlargeImage = clickedImage => {
