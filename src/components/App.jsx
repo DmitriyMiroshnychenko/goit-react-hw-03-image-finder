@@ -1,15 +1,15 @@
+import React from 'react';
 import styles from './App.module.css';
 import { Component } from 'react';
-import { ToastContainer } from 'react-toastify';
-import { toast } from 'react-toastify';
+import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Searchbar } from './Searchbar';
 import { ImageGallery } from './ImageGallery';
 import { Loader } from './Loader';
 import { Button } from './Button';
-import { FetchImages } from 'services/images-api';
+import { FetchImages } from '../services/images-api';
 import { Modal } from './Modal';
-import { applyDarkTheme } from 'services/theme-switcher';
+import { applyDarkTheme } from '../services/theme-switcher';
 
 export class App extends Component {
   state = {
@@ -28,14 +28,9 @@ export class App extends Component {
     const prevPage = prevState.currentPage;
     const prevSearchQuery = prevState.searchQuery;
 
-    if (prevSearchQuery !== searchQuery) {
+    if (prevSearchQuery !== searchQuery || prevPage !== currentPage) {
       this.setState({ loading: true, queryResult: [] });
-      this.handleFetch(prevPage, prevSearchQuery);
-    }
-
-    if (prevSearchQuery === searchQuery && prevPage !== currentPage) {
-      this.setState({ loading: true });
-      this.handleFetch(prevPage, prevSearchQuery);
+      this.handleFetch();
     }
   }
 
@@ -43,30 +38,34 @@ export class App extends Component {
     this.setState({ searchQuery, currentPage: 1 });
   };
 
-  handleFetch = (prevPage, prevSearchQuery) => {
+  handleFetch = () => {
     const { currentPage, searchQuery } = this.state;
 
     FetchImages(currentPage, searchQuery)
       .then(images => {
         if (images.hits.length === 0) {
-          toast.info('No images found for this query');
+          toast.info('Sorry, these images were not found. Please try again.');
           return;
         }
 
         this.setState(prevState => ({
           queryResult: [...prevState.queryResult, ...images.hits],
+          totalQueryResult: images.totalHits,
         }));
       })
-      .catch(response => {
-        console.log(response);
+      .catch(error => {
+        console.log(error);
       })
       .finally(() => this.setState({ loading: false }));
   };
 
   incrementPage = () => {
-    this.setState(prevState => ({
-      currentPage: prevState.currentPage + 1,
-    }));
+    this.setState(
+      prevState => ({
+        currentPage: prevState.currentPage + 1,
+      }),
+      this.handleFetch
+    );
   };
 
   toggleModal = () => {
@@ -87,7 +86,7 @@ export class App extends Component {
       isDarkTheme: !prevState.isDarkTheme,
     }));
 
-    applyDarkTheme(this.state.isDarkTheme);
+    applyDarkTheme(!this.state.isDarkTheme);
   };
 
   render() {
@@ -107,7 +106,7 @@ export class App extends Component {
           onSubmit={this.handleFormSubmit}
           changeTheme={this.toggleTheme}
         />
-        {queryResult && (
+        {queryResult.length > 0 && (
           <ImageGallery images={queryResult} openModal={this.enlargeImage} />
         )}
         {isModalOpen && (
@@ -118,7 +117,7 @@ export class App extends Component {
           />
         )}
         {loading && <Loader />}
-        {queryResult.length > 11 &&
+        {queryResult.length > 0 &&
           queryResult.length !== totalQueryResult &&
           !loading && <Button onClick={this.incrementPage} />}
       </div>
