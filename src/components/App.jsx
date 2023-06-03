@@ -29,13 +29,13 @@ export class App extends Component {
     const prevSearchQuery = prevState.searchQuery;
 
     if (prevSearchQuery !== searchQuery || prevPage !== currentPage) {
-      this.setState({ loading: true, queryResult: [] });
+      this.setState({ loading: true });
       this.handleFetch();
     }
   }
 
   handleFormSubmit = searchQuery => {
-    this.setState({ searchQuery, currentPage: 1 });
+    this.setState({ searchQuery, currentPage: 1, queryResult: [] });
   };
 
   handleFetch = () => {
@@ -50,6 +50,7 @@ export class App extends Component {
 
         this.setState(prevState => ({
           queryResult: [...prevState.queryResult, ...images.hits],
+          showBeggin: this.statePage < Math.ceil(images.totalHits / 12),
           totalQueryResult: images.totalHits,
         }));
       })
@@ -60,12 +61,9 @@ export class App extends Component {
   };
 
   incrementPage = () => {
-    this.setState(
-      prevState => ({
-        currentPage: prevState.currentPage + 1,
-      }),
-      this.handleFetch
-    );
+    this.setState(prevState => ({
+      currentPage: prevState.currentPage + 1,
+    }));
   };
 
   toggleModal = () => {
